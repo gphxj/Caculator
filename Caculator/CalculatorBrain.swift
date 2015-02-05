@@ -9,12 +9,28 @@
 import Foundation
 
 //Clculator Brain 计算器的大脑
-class ClculatorBrain
+class CalculatorBrain
 {
-    private enum Op {   // Op 运算、操作
+    private enum Op: Printable
+        // Op 运算、操作,  
+        // Printable 是 Protocol, 这个protpcol恰好是叫做description的property，可以返回一个Sting
+    {
         case Operand(Double)    //操作数
         case UnaryOperation(String, Double -> Double)   //一元运算
         case BinaryOperation(String, (Double, Double) -> Double)    //二元运算
+        
+        var description:String {
+            get {
+                switch self {
+                case .Operand(let operand):
+                    return "\(operand)"
+                case .UnaryOperation(let symbol, _):
+                    return symbol
+                case .BinaryOperation(let symbol, _):
+                    return symbol
+                }
+            }
+        }
     }
     
     private var opStack = [Op]()    //操作栈
@@ -22,6 +38,9 @@ class ClculatorBrain
     private var knownOps = [String:Op]()    //已知的运算
     
     init() {
+        func learnOp(op: Op) {
+            knownOps[op.description] = op
+        }
         knownOps["×"] = Op.BinaryOperation("×", *)          // 等同于 ("×") { $0 * $1 }
         knownOps["÷"] = Op.BinaryOperation("÷") { $1 / $0 }
         knownOps["+"] = Op.BinaryOperation("+", +)          // 等同于 ("+") { $0 + $1 }
@@ -61,18 +80,22 @@ class ClculatorBrain
 //  evaluate() 求…的数值
     func evaluate() -> Double? {
         let (result, remainder) = evaluate(opStack)
+        println("\(opStack) = \(result) with \(remainder) left over")
         return result
     }
 
-//  pushOperand(operand: Double)    把操作数压入堆栈
-    func pushOperand(operand: Double) {
+//  pushOperand(operand: Double)   把操作数压入堆栈
+    func pushOperand(operand: Double) -> Double? {
         opStack.append(Op.Operand(operand))
+        return evaluate()
     }
     
 //  performOperation(symbol: String)    执行操作
-    func performOperation(symbol: String) {
+    func performOperation(symbol: String) -> Double? {
         if let operation = knownOps[symbol] {
             opStack.append(operation)
         }
+        return evaluate()
     }
 }
+
